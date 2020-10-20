@@ -1,0 +1,272 @@
+<html>
+
+<canvas id = "gameCanvas" width="800" height="600">Sorry, Your browser does not support the HTML5 canvas tag. </canvas>
+
+<script>
+//Global Var
+var canvas;
+var canvasContext;
+
+var onKeyBoard = '';
+
+var pose = 1;
+var poseText = 'Pose!'
+
+const BACK_GROUND_COLOR = '#007777';
+
+var score = 0;
+heightScore = 0;
+
+var ballX = 20;
+var ballXSpeed = 5;
+var ballY = 20;
+var ballYSpeed = 2;
+
+var playerY = 10;
+var playerYSpeed = 5;
+var playerHeight = 150;
+const MAX_PLAYER_Y_SPEED = 6;
+const PLAYER_ACCELERATION = 6;
+const BAMP = 3;
+const HOW_TO_MOVE = 0;
+
+
+
+
+//Game Speed:
+const FRAME_PER_SECEND = 50;
+
+//initialize the game
+window.onload = function() {
+	canvas=document.getElementById('gameCanvas');
+	canvasContext = canvas.getContext('2d');
+
+    //Start main frame timer
+	setInterval(mainFrame,1000/FRAME_PER_SECEND);
+
+
+}
+
+// Run game's one main frame
+function mainFrame(){
+
+    console.log(onKeyBoard);
+
+    if(pose == 1){
+        //reset poseText to 'Pose!';
+        poseText = 'Pose!';
+
+        //clear canvas from all old frame context
+        clearAll();
+
+        //draw background color
+        drawBackGroundColor(BACK_GROUND_COLOR);
+
+        //create ball in the right place for  this frame
+        ball(ballX,ballY);
+
+        //create the middle border dashed line
+        var widthDashLine = 2;
+        var heightDashLine = 5;
+        var gaps = 20;
+        for(i=0;i < canvas.height ;i+=gaps){
+            colorRect(canvas.width/2-widthDashLine/2,i,widthDashLine,heightDashLine,'white');
+        }
+
+        //create player
+        player();
+
+        //write the score
+        myText(score,'Arial',20,30,30,'white');
+        myText(`שיא: ${heightScore}`,'Arial',20,canvas.width-60,30,'white');
+
+        if (onKeyBoard == 'Space') {
+            // Space
+            pose = pose*-1;
+            console.log(pose);
+            onKeyBoard = '';
+        }
+
+        //restart keyboard status
+        console.log(onKeyBoard);
+        onKeyBoard = '';
+
+    }
+
+    else{
+        poseNow();
+        if (onKeyBoard == 'Space') {
+            // Space
+            pose = pose*-1;
+            console.log(pose);
+            onKeyBoard = '';
+        }
+
+    }
+
+
+
+}
+
+function colorRect(xLoc,yLoc,width,height,colorDraw){
+    canvasContext.fillStyle = colorDraw;
+    canvasContext.fillRect(xLoc,yLoc,width,height);
+}
+
+function colorCir(xLoc,yLoc,radius,colorDraw){
+    canvasContext.fillStyle = colorDraw;
+    canvasContext.beginPath();
+    canvasContext.arc(xLoc,yLoc,radius,0,2*Math.PI);
+    canvasContext.fill();
+}
+
+function myText(text, font, size,x,y,color){
+    canvasContext.font=`${size}px ${font}`;
+    canvasContext.fillStyle = color;
+    canvasContext.textAlign = 'center';
+    canvasContext.fillText(text,x,y)
+}
+
+function poseNow(){
+    myText(poseText,'Arial', 50, canvas.width/2, canvas.height/4, 'white');
+
+}
+
+function clearAll(){
+canvasContext.clearRect(0,0,canvas.width,canvas.height);
+}
+
+function drawBackGroundColor(color){
+colorRect(0,0,canvas.width,canvas.height,color);
+}
+
+function ball(xLoc,yBall){
+    var ballRadius = 10;
+    colorCir(xLoc,yBall,ballRadius,'white');
+
+    //move the ball by global variable "ballSpeed" (radius need for collisions check)
+    moveBall(ballRadius);
+
+
+}
+
+
+function moveBall(radius){
+    ballX+=ballXSpeed;
+    ballY+=ballYSpeed;
+
+
+    if((ballY>playerY && ballY<playerY+playerHeight) && (ballX-radius<15 || ballX+radius > canvas.width-15)){
+            ballXSpeed=-(ballXSpeed);
+            score+=1;
+            myText(score,'Arial',50,30,40,'white')
+            myText(score,'Arial',30,30,35,'white')
+    }
+
+    if(ballX+radius > canvas.width || ballX-radius < 0){
+        gameOver();
+    }
+
+    if(ballY+radius > canvas.height || ballY-radius < 0){
+        ballYSpeed=-(ballYSpeed);
+    }
+
+}
+
+function gameOver(){
+        ballX=canvas.width/2;
+        ballY=canvas.height/2;
+        pose = -1;
+        poseText = 'Ooops!';
+        if(score > heightScore){
+           heightScore = score;
+           score = 0;
+        }
+
+}
+
+function player(){
+    var width = 10;
+    var height = playerHeight;
+    var gap = 7;
+
+    colorRect(gap,playerY,width,height,'red');
+    colorRect(gap-1,playerY,width+2,4,'black');
+    colorRect(gap-1,playerY+height-4,width+2,4,'black');
+
+
+    colorRect(canvas.width-gap-width,playerY,width,height,'red');
+    colorRect(canvas.width-gap-1-width,playerY,width+2,4,'black');
+    colorRect(canvas.width-gap-1-width,playerY+height-4,width+2,4,'black');
+
+    if(HOW_TO_MOVE==0){
+        movePlayer(height);
+    }
+    else{
+        movePlayerEasily(height);
+    }
+
+
+}
+
+function movePlayer(height){
+    if(onKeyBoard == 'ArrowUp' && playerYSpeed>-MAX_PLAYER_Y_SPEED) {
+        // Up arrow
+        playerYSpeed-=PLAYER_ACCELERATION;
+        console.log(playerYSpeed);
+    }
+
+    if(onKeyBoard == 'ArrowDown' && playerYSpeed<MAX_PLAYER_Y_SPEED) {
+        // down arrow
+        playerYSpeed+=PLAYER_ACCELERATION;
+        console.log(playerYSpeed);
+    }
+
+
+    if(playerY>0 && playerY+height<canvas.height){
+        playerY+=playerYSpeed;
+    }
+    else if(playerY<0){
+        playerY=BAMP;
+        playerYSpeed=1;
+    }
+    else{
+        playerY=canvas.height-height-BAMP;
+        playerYSpeed=-1;
+    }
+
+    if(playerYSpeed < 0){
+            playerYSpeed+=0.1;
+    }
+    if(playerYSpeed > 0){
+            playerYSpeed-=0.1;
+    }
+}
+
+
+function movePlayerEasily(){
+    if(onKeyBoard == 'ArrowUp' && playerYSpeed>-MAX_PLAYER_Y_SPEED) {
+        // Up arrow
+        playerY-=20;
+    }
+
+    if(onKeyBoard == 'ArrowDown' && playerYSpeed<MAX_PLAYER_Y_SPEED) {
+        // down arrow
+        playerY+=20;
+    }
+
+
+}
+
+
+document.onkeydown = checkKey;
+
+function checkKey(e) {
+    e = e || window.event;
+    onKeyBoard = e.code;
+    console.log(e);
+}
+
+</script>
+
+</html>
